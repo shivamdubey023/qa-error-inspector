@@ -14,6 +14,9 @@ chrome.devtools.network.onRequestFinished.addListener((request) => {
   const url = request?.request?.url || "(unknown)";
   const method = request?.request?.method || "";
 
+  if (method === "OPTIONS") return;
+
+  
   // -------- PAYLOAD EXTRACTION --------
   let payload = null;
 
