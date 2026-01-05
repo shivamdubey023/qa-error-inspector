@@ -3,23 +3,35 @@ const clearBtn =
   document.getElementById("clearErrors") ||
   document.getElementById("clear");
 
-// Clear all errors
 if (clearBtn && container) {
   clearBtn.addEventListener("click", () => {
     container.innerHTML = "";
   });
 }
 
-// Listen to network requests
 chrome.devtools.network.onRequestFinished.addListener((request) => {
-
   const status = request?.response?.status;
   const url = request?.request?.url || "(unknown)";
   const method = request?.request?.method || "";
 
-  request.getContent((body) => {
+  // -------- PAYLOAD EXTRACTION --------
+  let payload = null;
 
-    // Normalize empty body
+  const postData = request?.request?.postData;
+
+  if (postData?.text) {
+    try {
+      payload = JSON.stringify(JSON.parse(postData.text), null, 2);
+    } catch (e) {
+      payload = postData.text; // fallback for non-JSON
+    }
+  } else if (postData?.params?.length) {
+    payload = JSON.stringify(postData.params, null, 2);
+  } else {
+    payload = "No request payload";
+  }
+
+  request.getContent((body) => {
     if (!body) {
       body = "No response body available";
     }
@@ -28,7 +40,7 @@ chrome.devtools.network.onRequestFinished.addListener((request) => {
       body.includes("No response body available") ||
       body.includes("failed before response");
 
-    // Detect GraphQL errors
+    // -------- GRAPHQL ERROR DETECTION --------
     let graphQLError = null;
     try {
       const json = typeof body === "string" ? JSON.parse(body) : body;
@@ -41,15 +53,17 @@ chrome.devtools.network.onRequestFinished.addListener((request) => {
       }
     }
 
-    // FINAL SIMPLE RULE
+    // -------- FINAL FILTER --------
+    const isHttpError =
+      typeof status === "number" && status >= 400;
+
     const shouldShow =
       graphQLError ||
       hasNoBody ||
-      (typeof status === "number" && status !== 200);
+      isHttpError;
 
     if (!shouldShow || !container) return;
 
-    // Create error card
     const div = document.createElement("div");
     div.className = "error";
 
@@ -60,7 +74,16 @@ chrome.devtools.network.onRequestFinished.addListener((request) => {
       <div><b>URL:</b> ${url}</div>
       <div><b>Method:</b> ${method}</div>
       <div><b>Status:</b> ${status}</div>
-      <pre>${graphQLError || body}</pre>
+
+      <details>
+        <summary><b>Request Payload</b></summary>
+        <pre>${payload}</pre>
+      </details>
+
+      <details open>
+        <summary><b>Response / Error</b></summary>
+        <pre>${graphQLError || body}</pre>
+      </details>
     `;
 
     container.prepend(div);
