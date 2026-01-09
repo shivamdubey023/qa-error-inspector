@@ -1,3 +1,17 @@
+const searchInput = document.getElementById("search");
+
+if (searchInput && container) {
+  searchInput.addEventListener("input", () => {
+    const value = searchInput.value.toLowerCase();
+    const items = container.querySelectorAll(".error");
+
+    items.forEach((item) => {
+      const text = item.innerText.toLowerCase();
+      item.style.display = text.includes(value) ? "" : "none";
+    });
+  });
+}
+
 const container = document.getElementById("errors");
 const clearBtn =
   document.getElementById("clearErrors") ||

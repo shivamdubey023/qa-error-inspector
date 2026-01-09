@@ -8,11 +8,19 @@
   </head>
 
   <body>
-    <header>
+    <header class="header">
       <h3>🚨 QA Error Inspector</h3>
       <button id="clearErrors">Clear</button>
     </header>
 
+    <!-- Search bar -->
+    <input
+      id="search"
+      type="text"
+      placeholder="Search by URL, status, method, graphql…"
+    />
+
+    <!-- Errors will be injected here -->
     <div id="errors"></div>
 
     <script src="panel.js"></script>
