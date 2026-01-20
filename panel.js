@@ -70,6 +70,13 @@ chrome.devtools.network.onRequestFinished.addListener((request) => {
       }
     }
 
+    // -------- ERROR IN RESPONSE BODY DETECTION --------
+    let hasErrorInBody = false;
+    if (body && typeof body === "string") {
+      const lowerBody = body.toLowerCase();
+      hasErrorInBody = lowerBody.includes('error') || lowerBody.includes('fail') || lowerBody.includes('exception') || lowerBody.includes('invalid');
+    }
+
     // -------- FINAL FILTER --------
     const isHttpError =
       typeof status === "number" && status >= 400;
@@ -77,7 +84,8 @@ chrome.devtools.network.onRequestFinished.addListener((request) => {
     const shouldShow =
       graphQLError ||
       hasNoBody ||
-      isHttpError;
+      isHttpError ||
+      hasErrorInBody;
 
     if (!shouldShow || !container) return;
 
